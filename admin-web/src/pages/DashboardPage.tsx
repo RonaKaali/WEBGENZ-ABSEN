@@ -29,7 +29,25 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchAll();
-    subscribeRealtime();
+    const today = new Date().toISOString().split('T')[0];
+    const channel = supabase
+      .channel('attendance-changes-today')
+      .on('postgres_changes', 
+        { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'attendance',
+          filter: `tanggal=eq.${today}` 
+        },
+        (payload) => {
+          setFeed(prev => [payload.new, ...prev.slice(0, 19)]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchAll = async () => {
@@ -107,25 +125,6 @@ export default function DashboardPage() {
       console.warn('Supabase not configured yet, using placeholder');
     }
     setLoading(false);
-  };
-
-  const subscribeRealtime = () => {
-    const today = new Date().toISOString().split('T')[0];
-    const channel = supabase
-      .channel('attendance-changes-today')
-      .on('postgres_changes', 
-        { 
-          event: 'INSERT', 
-          schema: 'public', 
-          table: 'attendance',
-          filter: `tanggal=eq.${today}` 
-        },
-        (payload) => {
-          setFeed(prev => [payload.new, ...prev.slice(0, 19)]);
-        }
-      )
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
   };
 
   const CustomTooltip = ({ active, payload, label }: any) => {
