@@ -70,7 +70,7 @@ export function useAttendance(userId: string | undefined) {
         .eq('employee_id', userId)
         .gte('tanggal', monthStr);
 
-      const summary = { hadir: 0, terlambat: 0, absen: 0, izin: 0 };
+      const summary: Record<string, number> = { hadir: 0, terlambat: 0, absen: 0, izin: 0 };
       monthData?.forEach((d: any) => {
         if (summary[d.status] !== undefined) summary[d.status]++;
       });
