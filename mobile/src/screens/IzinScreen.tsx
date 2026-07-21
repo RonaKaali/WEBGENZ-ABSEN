@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { useMobileAuth } from '../lib/AuthProvider';
+import { supabase } from '../lib/supabase';
 
 const jenisIzin = [
   { id: 'sakit', label: 'Sakit', icon: '🤒', color: '#f59e0b' },
@@ -9,16 +11,34 @@ const jenisIzin = [
 ];
 
 export default function IzinScreen() {
+  const { user } = useMobileAuth();
   const [jenis, setJenis] = useState('');
   const [tglMulai, setTglMulai] = useState('');
   const [tglSelesai, setTglSelesai] = useState('');
   const [keterangan, setKeterangan] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!jenis || !tglMulai || !tglSelesai) return;
-    // In real app: INSERT to leave_requests table
-    setSubmitted(true);
+    if (!user) { Alert.alert('Error', 'Silakan login dulu'); return; }
+
+    setSending(true);
+    const { error } = await supabase.from('leave_requests').insert({
+      employee_id: user.id,
+      jenis,
+      tanggal_mulai: tglMulai,
+      tanggal_selesai: tglSelesai,
+      keterangan,
+      status: 'pending',
+    });
+    setSending(false);
+
+    if (error) {
+      Alert.alert('Gagal', error.message);
+    } else {
+      setSubmitted(true);
+    }
   };
 
   if (submitted) {
@@ -43,14 +63,12 @@ export default function IzinScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: '#e2e8f0' }}>
-      {/* Header */}
       <View style={{ backgroundColor: '#0f172a', paddingTop: 60, paddingBottom: 20, paddingHorizontal: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
         <Text style={{ color: 'white', fontSize: 22, fontWeight: '700' }}>Ajukan Izin</Text>
         <Text style={{ color: '#64748b', fontSize: 13, marginTop: 2 }}>Isi form pengajuan izin di bawah</Text>
       </View>
 
       <ScrollView style={{ flex: 1, padding: 16 }} showsVerticalScrollIndicator={false}>
-        {/* Jenis Izin */}
         <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#0f172a', marginBottom: 12 }}>Jenis Izin</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -71,10 +89,7 @@ export default function IzinScreen() {
                 }}
               >
                 <Text style={{ fontSize: 20 }}>{item.icon}</Text>
-                <Text style={{
-                  fontSize: 14, fontWeight: '600',
-                  color: jenis === item.id ? 'white' : '#475569',
-                }}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: jenis === item.id ? 'white' : '#475569' }}>
                   {item.label}
                 </Text>
               </TouchableOpacity>
@@ -82,7 +97,6 @@ export default function IzinScreen() {
           </View>
         </View>
 
-        {/* Tanggal */}
         <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#0f172a', marginBottom: 12 }}>Tanggal</Text>
           <View style={{ flexDirection: 'row', gap: 12 }}>
@@ -93,10 +107,7 @@ export default function IzinScreen() {
                 onChangeText={setTglMulai}
                 placeholder="YYYY-MM-DD"
                 placeholderTextColor="#94a3b8"
-                style={{
-                  backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, fontSize: 14,
-                  borderWidth: 1, borderColor: '#e2e8f0', color: '#0f172a',
-                }}
+                style={{ backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#e2e8f0', color: '#0f172a' }}
               />
             </View>
             <View style={{ flex: 1 }}>
@@ -106,16 +117,12 @@ export default function IzinScreen() {
                 onChangeText={setTglSelesai}
                 placeholder="YYYY-MM-DD"
                 placeholderTextColor="#94a3b8"
-                style={{
-                  backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, fontSize: 14,
-                  borderWidth: 1, borderColor: '#e2e8f0', color: '#0f172a',
-                }}
+                style={{ backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#e2e8f0', color: '#0f172a' }}
               />
             </View>
           </View>
         </View>
 
-        {/* Keterangan */}
         <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 24 }}>
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#0f172a', marginBottom: 8 }}>Keterangan</Text>
           <TextInput
@@ -125,27 +132,25 @@ export default function IzinScreen() {
             placeholderTextColor="#94a3b8"
             multiline
             numberOfLines={4}
-            style={{
-              backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, fontSize: 14,
-              borderWidth: 1, borderColor: '#e2e8f0', color: '#0f172a',
-              minHeight: 100, textAlignVertical: 'top',
-            }}
+            style={{ backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#e2e8f0', color: '#0f172a', minHeight: 100, textAlignVertical: 'top' }}
           />
         </View>
 
-        {/* Submit */}
         <TouchableOpacity
           onPress={handleSubmit}
-          disabled={!jenis || !tglMulai || !tglSelesai}
+          disabled={!jenis || !tglMulai || !tglSelesai || sending}
           style={{
             backgroundColor: (!jenis || !tglMulai || !tglSelesai) ? '#94a3b8' : '#0d9488',
-            paddingVertical: 14,
+            paddingVertical: 16,
             borderRadius: 12,
             alignItems: 'center',
             marginBottom: 32,
+            opacity: sending ? 0.6 : 1,
           }}
         >
-          <Text style={{ color: 'white', fontSize: 16, fontWeight: '700' }}>Kirim Pengajuan</Text>
+          <Text style={{ color: 'white', fontSize: 16, fontWeight: '700' }}>
+            {sending ? 'Mengirim...' : 'Ajukan Izin'}
+          </Text>
         </TouchableOpacity>
       </ScrollView>
     </View>
