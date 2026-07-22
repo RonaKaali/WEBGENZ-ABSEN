@@ -35,16 +35,26 @@ export default function LoginPage() {
         width: '100%',
         maxWidth: '420px',
       }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          marginBottom: '2rem',
+        }}>
+          <img
+            src="/LOGO.png"
+            alt="WEBGENZ"
+            style={{ width: 120, height: 120, borderRadius: 24, marginBottom: 16, objectFit: 'contain', display: 'block' }}
+          />
           <h1 style={{
             color: 'white',
-            fontSize: '1.75rem',
+            fontSize: '1.5rem',
             fontWeight: 700,
             letterSpacing: '-0.02em',
           }}>
-            <span style={{ color: '#14b8a6' }}>WEB</span>GENZ
+            WEBGENZ Absensi
           </h1>
-          <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginTop: '0.5rem' }}>
+          <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginTop: '0.25rem' }}>
             Masuk ke dashboard absensi
           </p>
         </div>

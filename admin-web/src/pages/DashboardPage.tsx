@@ -25,6 +25,7 @@ export default function DashboardPage() {
   const [deptData, setDeptData] = useState<any[]>([]);
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [feed, setFeed] = useState<any[]>([]);
+  const [feedThumbnails, setFeedThumbnails] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -40,7 +41,10 @@ export default function DashboardPage() {
           filter: `tanggal=eq.${today}` 
         },
         (payload) => {
-          setFeed(prev => [payload.new, ...prev.slice(0, 19)]);
+          const newItem = payload.new as any;
+          setFeed(prev => [newItem, ...prev.slice(0, 19)]);
+          // Fetch thumbnail for realtime item
+          fetchThumbnailForItem(newItem);
         }
       )
       .subscribe();
@@ -49,6 +53,19 @@ export default function DashboardPage() {
       supabase.removeChannel(channel);
     };
   }, []);
+
+  const fetchThumbnailForItem = async (item: any) => {
+    if (item.foto_masuk_url) {
+      try {
+        const { data } = await supabase.storage
+          .from('absensi-foto')
+          .createSignedUrl(item.foto_masuk_url, 3600);
+        if (data) {
+          setFeedThumbnails(prev => ({ ...prev, [item.id || item.foto_masuk_url]: data.signedUrl }));
+        }
+      } catch {}
+    }
+  };
 
   const fetchAll = async () => {
     try {
@@ -119,7 +136,22 @@ export default function DashboardPage() {
 
       // Feed aktivitas (hari ini)
       if (todayData) {
-        setFeed(todayData.slice(-10).reverse());
+        const sortedTodayData = [...todayData].reverse();
+        setFeed(sortedTodayData.slice(-10));
+
+        // Fetch thumbnail untuk foto masuk
+        const thumbnails: Record<string, string> = {};
+        for (const item of sortedTodayData.slice(-10)) {
+          if (item.foto_masuk_url) {
+            try {
+              const { data } = await supabase.storage
+                .from('absensi-foto')
+                .createSignedUrl(item.foto_masuk_url, 3600);
+              if (data) thumbnails[item.id || item.foto_masuk_url] = data.signedUrl;
+            } catch {}
+          }
+        }
+        setFeedThumbnails(thumbnails);
       }
     } catch (err) {
       console.warn('Supabase not configured yet, using placeholder');
@@ -225,48 +257,69 @@ export default function DashboardPage() {
                 {loading ? 'Memuat...' : 'Belum ada aktivitas hari ini'}
               </p>
             ) : (
-              feed.map((item, i) => (
-                <div key={i} style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  padding: '0.625rem 0',
-                  borderBottom: '1px solid #f1f5f9',
-                  animation: `fadeIn 0.3s ease-out ${i * 0.05}s both`,
-                }}>
-                  <div style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: '50%',
-                    background: item.status === 'hadir' ? '#d1fae5' : '#fef3c7',
+              feed.map((item, i) => {
+                const thumbKey = item.id || item.foto_masuk_url;
+                const thumbnailUrl = feedThumbnails[thumbKey];
+
+                return (
+                  <div key={i} style={{
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '0.875rem',
-                    flexShrink: 0,
+                    gap: '0.75rem',
+                    padding: '0.625rem 0',
+                    borderBottom: '1px solid #f1f5f9',
+                    animation: `fadeIn 0.3s ease-out ${i * 0.05}s both`,
                   }}>
-                    {item.status === 'hadir' ? '✅' : '⚠️'}
+                    {/* Thumbnail foto selfie */}
+                    {thumbnailUrl ? (
+                      <img
+                        src={thumbnailUrl}
+                        alt="selfie"
+                        style={{
+                          width: 36,
+                          height: 36,
+                          borderRadius: '50%',
+                          objectFit: 'cover',
+                          border: '2px solid #e2e8f0',
+                          flexShrink: 0,
+                        }}
+                      />
+                    ) : (
+                      <div style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: '50%',
+                        background: item.status === 'hadir' ? '#d1fae5' : '#fef3c7',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.875rem',
+                        flexShrink: 0,
+                      }}>
+                        {item.status === 'hadir' ? '✅' : '⚠️'}
+                      </div>
+                    )}
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-primary)' }}>
+                        {(item as any).employees?.nama || 'Karyawan'}
+                      </p>
+                      <p style={{ fontSize: '0.7rem', color: 'var(--color-text-light)' }}>
+                        {item.status === 'hadir' ? 'Hadir' : 'Terlambat'} • {item.jam_masuk ? new Date(item.jam_masuk).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
+                      </p>
+                    </div>
+                    <span style={{
+                      fontSize: '0.65rem',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '0.25rem',
+                      fontWeight: 600,
+                      background: item.status === 'hadir' ? '#d1fae5' : '#fef3c7',
+                      color: item.status === 'hadir' ? '#065f46' : '#92400e',
+                    }}>
+                      {item.status === 'hadir' ? 'Tepat' : 'Telat'}
+                    </span>
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-primary)' }}>
-                      {(item as any).employees?.nama || 'Karyawan'}
-                    </p>
-                    <p style={{ fontSize: '0.7rem', color: 'var(--color-text-light)' }}>
-                      {item.status === 'hadir' ? 'Hadir' : 'Terlambat'} • {item.jam_masuk ? new Date(item.jam_masuk).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '--:--'}
-                    </p>
-                  </div>
-                  <span style={{
-                    fontSize: '0.65rem',
-                    padding: '0.2rem 0.5rem',
-                    borderRadius: '0.25rem',
-                    fontWeight: 600,
-                    background: item.status === 'hadir' ? '#d1fae5' : '#fef3c7',
-                    color: item.status === 'hadir' ? '#065f46' : '#92400e',
-                  }}>
-                    {item.status === 'hadir' ? 'Tepat' : 'Telat'}
-                  </span>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

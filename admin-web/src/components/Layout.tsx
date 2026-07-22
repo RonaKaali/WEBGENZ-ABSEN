@@ -31,16 +31,27 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <div style={{
           padding: '1.5rem 1.25rem',
           borderBottom: '1px solid rgba(255,255,255,0.05)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.75rem',
         }}>
-          <h1 style={{
-            color: 'white',
-            fontSize: '1.25rem',
-            fontWeight: 700,
-            letterSpacing: '-0.02em',
-          }}>
-            <span style={{ color: '#14b8a6' }}>WEB</span>GENZ
-          </h1>
-          <p style={{ color: '#64748b', fontSize: '0.75rem', marginTop: '0.25rem' }}>Absensi Manager</p>
+          <img
+            src="/LOGO.png"
+            alt="WEBGENZ"
+            style={{ height: 36, width: 'auto', borderRadius: 8 }}
+          />
+          <div>
+            <h1 style={{
+              color: 'white',
+              fontSize: '1rem',
+              fontWeight: 700,
+              letterSpacing: '-0.02em',
+              lineHeight: 1.2,
+            }}>
+              WEBGENZ
+            </h1>
+            <p style={{ color: '#64748b', fontSize: '0.7rem', marginTop: '0.1rem' }}>Absensi Manager</p>
+          </div>
         </div>
 
         {/* Navigation */}

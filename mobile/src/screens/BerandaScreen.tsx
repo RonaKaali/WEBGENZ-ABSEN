@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import * as Location from 'expo-location';
 import { useMobileAuth } from '../lib/AuthProvider';
 import { useEmployee, useAttendance } from '../hooks/useAttendance';
+import CameraSelfieScreen from '../components/CameraSelfieScreen';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 const GREETINGS = ['Selamat Pagi', 'Selamat Siang', 'Selamat Sore', 'Selamat Malam'];
 const MONTHS = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
@@ -35,24 +38,89 @@ function Clock() {
 export default function BerandaScreen() {
   const { user } = useMobileAuth();
   const { employee, loading: empLoading } = useEmployee(user?.id);
-  const { today, history, monthSummary, loading, checkIn, checkOut, refetch } = useAttendance(user?.id);
+  const { today, history, monthSummary, loading, checkInWithLocation, checkOutWithLocation, refetch } = useAttendance(user?.id);
+
+  const [showCamera, setShowCamera] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadingMessage, setLoadingMessage] = useState('');
+  const [pendingAction, setPendingAction] = useState<'masuk' | 'keluar' | null>(null);
+  const [capturedLocation, setCapturedLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   const totalMonth = monthSummary.hadir + monthSummary.terlambat + monthSummary.absen + monthSummary.izin;
   const hadirPct = totalMonth > 0 ? Math.round((monthSummary.hadir / totalMonth) * 100) : 0;
 
-  const handleMainButton = async () => {
-    if (!today) {
-      const result = await checkIn();
-      if (result?.error) Alert.alert('Error', result.error);
-    } else if (!today.jam_keluar) {
-      const result = await checkOut();
-      if (result?.error) Alert.alert('Error', result.error);
-    }
-  };
-
   const isBeforeWork = !today;
   const isWorking = today && !today.jam_keluar;
   const isDone = today && today.jam_keluar;
+
+  // Step 1: Minta izin lokasi & ambil koordinat
+  const requestLocation = async (action: 'masuk' | 'keluar') => {
+    try {
+      setLoadingMessage('Mengambil lokasi...');
+      setIsLoading(true);
+
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setIsLoading(false);
+        Alert.alert('Lokasi Diperlukan', 'Lokasi wajib diaktifkan untuk absen');
+        return;
+      }
+
+      const loc = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+
+      setCapturedLocation({
+        lat: loc.coords.latitude,
+        lng: loc.coords.longitude,
+      });
+      setIsLoading(false);
+
+      // Lanjut ke kamera
+      setPendingAction(action);
+      setShowCamera(true);
+    } catch (err) {
+      setIsLoading(false);
+      Alert.alert('Gagal Mendapatkan Lokasi', 'Lokasi wajib diaktifkan untuk absen. Periksa pengaturan GPS Anda.');
+    }
+  };
+
+  // Step 2-4: Foto diambil → upload + simpan
+  const handlePhotoCapture = async (photoUri: string) => {
+    setShowCamera(false);
+    if (!pendingAction || !capturedLocation) return;
+
+    setIsLoading(true);
+
+    let result;
+    if (pendingAction === 'masuk') {
+      result = await checkInWithLocation(photoUri, capturedLocation.lat, capturedLocation.lng, setLoadingMessage);
+    } else {
+      result = await checkOutWithLocation(photoUri, capturedLocation.lat, capturedLocation.lng, setLoadingMessage);
+    }
+
+    setIsLoading(false);
+    setPendingAction(null);
+    setCapturedLocation(null);
+
+    if (result?.error) {
+      Alert.alert('Gagal', result.error);
+    }
+  };
+
+  const handleCameraClose = () => {
+    setShowCamera(false);
+    setPendingAction(null);
+    setCapturedLocation(null);
+  };
+
+  const handleMainButton = () => {
+    if (isBeforeWork) {
+      requestLocation('masuk');
+    } else if (isWorking) {
+      requestLocation('keluar');
+    }
+  };
 
   if (loading || empLoading) {
     return (
@@ -175,6 +243,14 @@ export default function BerandaScreen() {
           )}
         </View>
       </ScrollView>
+
+      {/* Kamera Selfie Modal */}
+      {showCamera && (
+        <CameraSelfieScreen onCapture={handlePhotoCapture} onClose={handleCameraClose} />
+      )}
+
+      {/* Loading Overlay */}
+      <LoadingOverlay visible={isLoading} message={loadingMessage} />
     </View>
   );
 }

@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, Platform } from 'react-native';
 import { useMobileAuth } from '../lib/AuthProvider';
 import { useEmployee, useAttendance } from '../hooks/useAttendance';
 
@@ -13,10 +13,15 @@ export default function ProfilScreen() {
   const hadirPct = totalMonth > 0 ? Math.round((monthSummary.hadir / totalMonth) * 100) : 0;
 
   const handleLogout = () => {
-    Alert.alert('Keluar', 'Yakin ingin keluar?', [
-      { text: 'Batal', style: 'cancel' },
-      { text: 'Ya, Keluar', style: 'destructive', onPress: () => signOut() },
-    ]);
+    // Di web pakai window.confirm (lebih reliable), di native pakai Alert
+    if (Platform.OS === 'web') {
+      if (confirm('Yakin ingin keluar?')) signOut();
+    } else {
+      Alert.alert('Keluar', 'Yakin ingin keluar?', [
+        { text: 'Batal', style: 'cancel' },
+        { text: 'Ya, Keluar', style: 'destructive', onPress: () => signOut() },
+      ]);
+    }
   };
 
   return (
@@ -35,7 +40,7 @@ export default function ProfilScreen() {
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1, padding: 16 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1, padding: 16 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16 }}>
           <Text style={{ fontSize: 15, fontWeight: '600', color: '#0f172a', marginBottom: 12 }}>Informasi Karyawan</Text>
           {[
@@ -65,16 +70,26 @@ export default function ProfilScreen() {
           </View>
         </View>
 
-        <View style={{ backgroundColor: 'white', borderRadius: 16, overflow: 'hidden', marginBottom: 32 }}>
-          <TouchableOpacity
-            onPress={handleLogout}
-            style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' }}
-          >
-            <Text style={{ fontSize: 18, marginRight: 12 }}>🚪</Text>
-            <Text style={{ flex: 1, fontSize: 14, fontWeight: '500', color: '#ef4444' }}>Keluar</Text>
-            <Text style={{ color: '#94a3b8', fontSize: 14 }}>{'>'}</Text>
-          </TouchableOpacity>
-        </View>
+        {/* Tombol Keluar — besar & jelas */}
+        <TouchableOpacity
+          onPress={handleLogout}
+          activeOpacity={0.7}
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 10,
+            backgroundColor: 'white',
+            borderRadius: 16,
+            paddingVertical: 18,
+            paddingHorizontal: 20,
+            borderWidth: 1.5,
+            borderColor: '#fee2e2',
+          }}
+        >
+          <Text style={{ fontSize: 20 }}>🚪</Text>
+          <Text style={{ fontSize: 16, fontWeight: '600', color: '#ef4444' }}>Keluar / Ganti User</Text>
+        </TouchableOpacity>
       </ScrollView>
     </View>
   );

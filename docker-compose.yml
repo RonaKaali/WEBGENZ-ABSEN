@@ -1,0 +1,12 @@
+services:
+  admin-web:
+    build:
+      context: .
+      dockerfile: Dockerfile.admin-web
+    container_name: webgenz-absensi-admin
+    ports:
+      - "80:80"
+    environment:
+      - VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+      - VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
+    restart: unless-stopped

@@ -27,6 +27,24 @@ export function useEmployee(userId: string | undefined) {
   return { employee, loading, refetch: fetchEmployee };
 }
 
+async function uploadPhoto(userId: string, photoUri: string, prefix: string): Promise<string> {
+  const today = new Date().toISOString().split('T')[0];
+  const filePath = `${userId}/${today}-${prefix}.jpg`;
+
+  const response = await fetch(photoUri);
+  const blob = await response.blob();
+
+  const { error } = await supabase.storage
+    .from('absensi-foto')
+    .upload(filePath, blob, {
+      contentType: 'image/jpeg',
+      upsert: true,
+    });
+
+  if (error) throw new Error(error.message);
+  return filePath;
+}
+
 export function useAttendance(userId: string | undefined) {
   const [today, setToday] = useState<any>(null);
   const [history, setHistory] = useState<any[]>([]);
@@ -81,12 +99,11 @@ export function useAttendance(userId: string | undefined) {
     setLoading(false);
   };
 
-  const checkIn = async () => {
+  const checkIn = async (): Promise<{ error?: string }> => {
     try {
       const now = new Date().toISOString();
       const todayStr = new Date().toISOString().split('T')[0];
 
-      // Get company settings for tolerance
       const { data: settings } = await supabase
         .from('company_settings')
         .select('*')
@@ -95,7 +112,6 @@ export function useAttendance(userId: string | undefined) {
       const jamMulai = settings?.jam_kerja_mulai || '08:00';
       const toleransi = settings?.toleransi_menit || 15;
 
-      // Check if late
       const [h, m] = jamMulai.split(':').map(Number);
       const batas = new Date();
       batas.setHours(h, m + toleransi, 0, 0);
@@ -115,7 +131,58 @@ export function useAttendance(userId: string | undefined) {
     }
   };
 
-  const checkOut = async () => {
+  const checkInWithLocation = async (
+    photoUri: string,
+    lat: number,
+    lng: number,
+    onProgress?: (msg: string) => void
+  ): Promise<{ error?: string }> => {
+    try {
+      if (!userId) return { error: 'User not found' };
+
+      const now = new Date().toISOString();
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // 1. Upload foto
+      onProgress?.('Mengunggah foto...');
+      const fotoPath = await uploadPhoto(userId, photoUri, 'masuk');
+
+      // 2. Get settings for status
+      const { data: settings } = await supabase
+        .from('company_settings')
+        .select('*')
+        .single();
+
+      const jamMulai = settings?.jam_kerja_mulai || '08:00';
+      const toleransi = settings?.toleransi_menit || 15;
+
+      const [h, m] = jamMulai.split(':').map(Number);
+      const batas = new Date();
+      batas.setHours(h, m + toleransi, 0, 0);
+      const status = new Date() > batas ? 'terlambat' : 'hadir';
+
+      // 3. Insert attendance
+      onProgress?.('Menyimpan absen...');
+      const { error } = await supabase.from('attendance').insert({
+        employee_id: userId,
+        tanggal: todayStr,
+        jam_masuk: now,
+        status,
+        lokasi_masuk_lat: lat,
+        lokasi_masuk_lng: lng,
+        foto_masuk_url: fotoPath,
+      });
+
+      if (error) throw new Error(error.message);
+
+      fetchData();
+      return {};
+    } catch (err: any) {
+      return { error: err.message || 'Gagal menyimpan absen, coba lagi' };
+    }
+  };
+
+  const checkOut = async (): Promise<{ error?: string }> => {
     try {
       const now = new Date().toISOString();
       const todayStr = new Date().toISOString().split('T')[0];
@@ -140,5 +207,57 @@ export function useAttendance(userId: string | undefined) {
     }
   };
 
-  return { today, history, monthSummary, loading, checkIn, checkOut, refetch: fetchData };
+  const checkOutWithLocation = async (
+    photoUri: string,
+    lat: number,
+    lng: number,
+    onProgress?: (msg: string) => void
+  ): Promise<{ error?: string }> => {
+    try {
+      if (!userId) return { error: 'User not found' };
+      if (!today?.jam_masuk) return { error: 'Belum absen masuk' };
+
+      const now = new Date().toISOString();
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      // 1. Upload foto
+      onProgress?.('Mengunggah foto...');
+      const fotoPath = await uploadPhoto(userId, photoUri, 'keluar');
+
+      // 2. Hitung durasi
+      const masuk = new Date(today.jam_masuk).getTime();
+      const keluar = new Date().getTime();
+      const durasi = Math.round((keluar - masuk) / 60000);
+
+      // 3. Update attendance
+      onProgress?.('Menyimpan absen...');
+      const { error } = await supabase
+        .from('attendance')
+        .update({
+          jam_keluar: now,
+          durasi_menit: durasi,
+          lokasi_keluar_lat: lat,
+          lokasi_keluar_lng: lng,
+          foto_keluar_url: fotoPath,
+        })
+        .eq('employee_id', userId)
+        .eq('tanggal', todayStr);
+
+      if (error) throw new Error(error.message);
+
+      fetchData();
+      return {};
+    } catch (err: any) {
+      return { error: err.message || 'Gagal menyimpan absen, coba lagi' };
+    }
+  };
+
+  return {
+    today, history, monthSummary, loading,
+    checkIn,
+    checkInWithLocation,
+    checkOut,
+    checkOutWithLocation,
+    refetch: fetchData,
+  };
 }

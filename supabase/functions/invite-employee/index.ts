@@ -34,8 +34,8 @@ serve(async (req) => {
 
     // Init Supabase client with SERVICE_ROLE key
     const supabaseAdmin = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
+      Deno.env.get('SB_URL') ?? '',
+      Deno.env.get('SB_SERVICE_ROLE_KEY') ?? '',
       {
         auth: {
           autoRefreshToken: false,
@@ -53,7 +53,7 @@ serve(async (req) => {
         departemen,
         role,
       },
-      redirectTo: `${Deno.env.get('PUBLIC_SITE_URL') || 'http://localhost:5173'}/login`,
+      redirectTo: `https://zmkjcbfoeowwnlpfmzhy.supabase.co/auth/v1/verify?type=invite`,
     });
 
     if (inviteError) {

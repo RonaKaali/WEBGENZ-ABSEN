@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text } from 'react-native';
+import { View, Text, Image } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useMobileAuth } from '../lib/AuthProvider';
+import SplashScreen from '../components/SplashScreen';
 
 import BerandaScreen from '../screens/BerandaScreen';
 import AbsensiScreen from '../screens/AbsensiScreen';
@@ -63,12 +64,28 @@ function MainTabs() {
 
 export default function AppNavigator() {
   const { user, loading } = useMobileAuth();
+  const [showSplash, setShowSplash] = useState(true);
 
+  // Splash screen → login
+  if (showSplash) {
+    return (
+      <SafeAreaProvider>
+        <SplashScreen onDone={() => setShowSplash(false)} />
+      </SafeAreaProvider>
+    );
+  }
+
+  // Loading auth state
   if (loading) {
     return (
       <SafeAreaProvider>
         <View style={{ flex: 1, backgroundColor: '#0f172a', justifyContent: 'center', alignItems: 'center' }}>
-          <Text style={{ color: 'white', fontSize: 16 }}>Memuat...</Text>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={{ width: 72, height: 72, borderRadius: 16, marginBottom: 16 }}
+            resizeMode="contain"
+          />
+          <Text style={{ color: '#64748b', fontSize: 14 }}>Memuat...</Text>
         </View>
       </SafeAreaProvider>
     );

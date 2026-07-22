@@ -6,7 +6,7 @@ export default function KaryawanPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState({ nama: '', email: '', nip: '', jabatan: '', departemen: '', role: 'karyawan' });
+  const [form, setForm] = useState({ nama: '', email: '', nip: '', jabatan: '', departemen: '', role: 'karyawan', password: '' });
 
   useEffect(() => { fetchEmployees(); }, []);
 
@@ -31,44 +31,47 @@ export default function KaryawanPage() {
     setFormLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('invite-employee', {
-        body: {
-          email: form.email,
-          nama: form.nama,
-          nip: form.nip,
-          jabatan: form.jabatan,
-          departemen: form.departemen,
-          role: form.role,
+      // Buat user auth via signUp — trigger handle_new_user() akan buat employees
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: form.email,
+        password: form.password || 'Welcome123!',
+        options: {
+          data: {
+            nama: form.nama,
+            nip: form.nip,
+            jabatan: form.jabatan,
+            departemen: form.departemen,
+          },
         },
       });
 
-      if (error) {
-        setFormError(error.message || 'Gagal mengundang karyawan');
+      if (authError) {
+        setFormError(authError.message);
         return;
       }
 
-      if (data.error) {
-        setFormError(data.error);
+      if (!authData.user) {
+        setFormError('Gagal membuat akun. Coba lagi.');
         return;
       }
 
-      setFormSuccess(data.message || `Undangan berhasil dikirim ke ${form.email}`);
-      setForm({ nama: '', email: '', nip: '', jabatan: '', departemen: '', role: 'karyawan' });
-      fetchEmployees(); // refresh list
+      // Jika role = admin, update setelah employee terbuat
+      if (form.role === 'admin') {
+        await supabase.from('employees').update({ role: 'admin' }).eq('id', authData.user.id);
+      }
+
+      setFormSuccess(`Akun berhasil dibuat untuk ${form.email}.`);
+      setForm({ nama: '', email: '', nip: '', jabatan: '', departemen: '', role: 'karyawan', password: '' });
+      fetchEmployees();
 
       setTimeout(() => {
         setShowForm(false);
         setFormSuccess('');
-      }, 3000);
+      }, 5000);
     } catch (err: any) {
-      setFormError(err.message || 'Gagal terhubung ke server. Pastikan Supabase sudah terkonfigurasi.');
+      setFormError(err.message || 'Gagal terhubung ke server.');
     }
     setFormLoading(false);
-  };
-
-  const getTodayStatus = (emp: any) => {
-    // Simplified — in production query attendance table
-    return null;
   };
 
   return (
@@ -132,6 +135,10 @@ export default function KaryawanPage() {
                 <option value="karyawan">Karyawan</option>
                 <option value="admin">Admin</option>
               </select>
+            </div>
+            <div>
+              <label style={{ fontSize: '0.8rem', fontWeight: 500, color: 'var(--color-text-secondary)', marginBottom: '0.25rem', display: 'block' }}>Password</label>
+              <input className="input-field" type="password" placeholder="Kosongkan untuk default" value={form.password} onChange={e => setForm({...form, password: e.target.value})} />
             </div>
             <div style={{ gridColumn: '1 / -1', display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
               <button type="button" className="btn-secondary" onClick={() => setShowForm(false)} disabled={formLoading}>Batal</button>

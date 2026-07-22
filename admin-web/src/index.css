@@ -329,3 +329,54 @@ body {
   color: var(--color-text-primary);
   box-shadow: 0 1px 2px rgba(0,0,0,0.05);
 }
+
+/* ===== Splash Screen Animations ===== */
+.splash-ripple {
+  position: absolute;
+  top: -8px;
+  left: -8px;
+  right: -8px;
+  bottom: -8px;
+  border-radius: 28px;
+  border: 2px solid rgba(20, 184, 166, 0.25);
+  animation: splashRipple 2s ease-out infinite;
+}
+
+@keyframes splashRipple {
+  0% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.splash-load-bar {
+  animation: splashLoadBar 1.3s ease-in-out forwards;
+}
+
+@keyframes splashLoadBar {
+  0% { width: 0%; }
+  100% { width: 100%; }
+}
+
+.splash-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #14b8a6;
+  animation: splashDotPulse 1s ease-in-out infinite;
+}
+
+@keyframes splashDotPulse {
+  0%, 100% { 
+    transform: scale(0.8);
+    opacity: 0.4;
+  }
+  50% { 
+    transform: scale(1.2);
+    opacity: 1;
+  }
+}

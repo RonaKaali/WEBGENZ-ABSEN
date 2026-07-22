@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, ScrollView, Alert, Platform } from 'react-native';
 import { useMobileAuth } from '../lib/AuthProvider';
 import { supabase } from '../lib/supabase';
 
@@ -9,6 +9,48 @@ const jenisIzin = [
   { id: 'keperluan', label: 'Keperluan', icon: '📋', color: '#8b5cf6' },
   { id: 'dinas', label: 'Dinas', icon: '🏢', color: '#0d9488' },
 ];
+
+// DateInput komponen yang pakai date picker native di web, TextInput di native
+function DateInput({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) {
+  if (Platform.OS === 'web') {
+    // Di web, pakai input date native browser
+    return (
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{label}</Text>
+        <input
+          type="date"
+          value={value}
+          onChange={(e) => onChange(e.target.value)}
+          style={{
+            width: '100%',
+            padding: '12px',
+            backgroundColor: '#f8fafc',
+            borderRadius: '10px',
+            border: '1px solid #e2e8f0',
+            fontSize: '14px',
+            color: '#0f172a',
+            fontFamily: 'inherit',
+            boxSizing: 'border-box',
+          }}
+        />
+      </View>
+    );
+  }
+
+  // Native: TextInput biasa (bisa install @react-native-community/datetimepicker nanti)
+  return (
+    <View style={{ flex: 1 }}>
+      <Text style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>{label}</Text>
+      <TextInput
+        value={value}
+        onChangeText={onChange}
+        placeholder="YYYY-MM-DD"
+        placeholderTextColor="#94a3b8"
+        style={{ backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#e2e8f0', color: '#0f172a' }}
+      />
+    </View>
+  );
+}
 
 export default function IzinScreen() {
   const { user } = useMobileAuth();
@@ -30,7 +72,7 @@ export default function IzinScreen() {
       tanggal_mulai: tglMulai,
       tanggal_selesai: tglSelesai,
       keterangan,
-      status: 'pending',
+      status: 'menunggu',
     });
     setSending(false);
 
@@ -100,26 +142,8 @@ export default function IzinScreen() {
         <View style={{ backgroundColor: 'white', borderRadius: 16, padding: 16, marginBottom: 16 }}>
           <Text style={{ fontSize: 14, fontWeight: '600', color: '#0f172a', marginBottom: 12 }}>Tanggal</Text>
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>Dari</Text>
-              <TextInput
-                value={tglMulai}
-                onChangeText={setTglMulai}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#94a3b8"
-                style={{ backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#e2e8f0', color: '#0f172a' }}
-              />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 11, color: '#64748b', marginBottom: 4 }}>Sampai</Text>
-              <TextInput
-                value={tglSelesai}
-                onChangeText={setTglSelesai}
-                placeholder="YYYY-MM-DD"
-                placeholderTextColor="#94a3b8"
-                style={{ backgroundColor: '#f8fafc', borderRadius: 10, padding: 12, fontSize: 14, borderWidth: 1, borderColor: '#e2e8f0', color: '#0f172a' }}
-              />
-            </View>
+            <DateInput value={tglMulai} onChange={setTglMulai} label="Dari" />
+            <DateInput value={tglSelesai} onChange={setTglSelesai} label="Sampai" />
           </View>
         </View>
 
