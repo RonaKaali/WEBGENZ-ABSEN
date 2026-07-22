@@ -143,15 +143,6 @@ export default function LoginPage() {
             {loading ? 'Memproses...' : 'Masuk'}
           </button>
         </form>
-
-        <p style={{
-          color: '#64748b',
-          fontSize: '0.75rem',
-          textAlign: 'center',
-          marginTop: '1.5rem',
-        }}>
-          Login demo: admin@webgenz.com / admin123
-        </p>
       </div>
     </div>
   );

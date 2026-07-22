@@ -156,16 +156,6 @@ export default function LoginScreen() {
               {logging ? 'Memverifikasi...' : 'Masuk'}
             </Text>
           </TouchableOpacity>
-
-          {/* Demo credentials hint */}
-          <Text style={{
-            color: '#475569',
-            fontSize: 12,
-            textAlign: 'center',
-            marginTop: 8,
-          }}>
-            Demo: admin@webgenz.com / admin123
-          </Text>
         </View>
 
         {/* Footer */}

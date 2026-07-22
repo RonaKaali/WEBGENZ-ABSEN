@@ -66,6 +66,7 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         transform: step >= 2 ? 'translateY(0)' : 'translateY(20px)',
         transition: 'all 0.6s ease-out',
         textAlign: 'center',
+        marginBottom: 48,
       }}>
         <h1 style={{
           color: 'white',
@@ -93,12 +94,10 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         </p>
       </div>
 
-      {/* Loading bar */}
+      {/* Loading bar - dipisah dengan margin agar tidak tumpang tindih */}
       <div style={{
         opacity: step >= 3 ? 1 : 0,
         transition: 'opacity 0.4s ease',
-        position: 'absolute',
-        bottom: '30%',
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 12,
       }}>
         <div style={{

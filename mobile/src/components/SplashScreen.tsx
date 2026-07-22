@@ -212,8 +212,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   loadingContainer: {
-    position: 'absolute',
-    bottom: '30%',
+    marginTop: 48,
     alignItems: 'center',
   },
   loadBarBg: {
