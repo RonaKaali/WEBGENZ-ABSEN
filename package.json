@@ -1,6 +1,10 @@
 {
   "private": true,
   "scripts": {
-    "build": "cd admin-web && npm install && npm run build"
+    "build": "npm install --prefix admin-web && npm run build --prefix admin-web"
+  },
+  "dependencies": {
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7"
   }
 }
