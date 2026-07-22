@@ -24,6 +24,24 @@ export default function KaryawanPage() {
   const [formSuccess, setFormSuccess] = useState('');
   const [formLoading, setFormLoading] = useState(false);
 
+  const handleDelete = async (id: string, nama: string) => {
+    if (!confirm(`Hapus karyawan ${nama}? Data absensi terkait juga akan dihapus.`)) return;
+    try {
+      // Hapus dari tabel employees
+      const { error } = await supabase.from('employees').delete().eq('id', id);
+      if (error) {
+        alert('Gagal: ' + error.message);
+        return;
+      }
+      // Hapus data absensi terkait
+      await supabase.from('attendance').delete().eq('employee_id', id);
+      await supabase.from('leave_requests').delete().eq('employee_id', id);
+      fetchEmployees();
+    } catch (err) {
+      alert('Gagal menghapus karyawan');
+    }
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
@@ -197,7 +215,27 @@ export default function KaryawanPage() {
                     <span style={{ fontWeight: 500 }}>{emp.tanggal_bergabung || '-'}</span>
                   </div>
                 </div>
-              </div>
+                      <button
+                        onClick={() => handleDelete(emp.id, emp.nama)}
+                        style={{
+                          marginTop: '0.75rem',
+                          width: '100%',
+                          padding: '0.4rem',
+                          background: 'rgba(239,68,68,0.08)',
+                          color: '#ef4444',
+                          border: '1px solid rgba(239,68,68,0.15)',
+                          borderRadius: '0.5rem',
+                          fontSize: '0.75rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = 'rgba(239,68,68,0.15)'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'rgba(239,68,68,0.08)'}
+                      >
+                        🗑 Hapus
+                      </button>
+                    </div>
             ))
           )}
         </div>
@@ -212,6 +250,7 @@ export default function KaryawanPage() {
                 <th>Jabatan</th>
                 <th>Departemen</th>
                 <th>Role</th>
+                <th>Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -241,6 +280,24 @@ export default function KaryawanPage() {
                       }}>
                         {emp.role}
                       </span>
+                    </td>
+                    <td style={{ fontSize: '0.75rem' }}>
+                      <button
+                        onClick={() => handleDelete(emp.id, emp.nama)}
+                        style={{
+                          padding: '0.3rem 0.5rem',
+                          background: 'rgba(239,68,68,0.08)',
+                          color: '#ef4444',
+                          border: '1px solid rgba(239,68,68,0.15)',
+                          borderRadius: '0.375rem',
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                        }}
+                      >
+                        Hapus
+                      </button>
                     </td>
                   </tr>
                 ))
