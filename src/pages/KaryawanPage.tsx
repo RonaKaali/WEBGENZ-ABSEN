@@ -25,20 +25,24 @@ export default function KaryawanPage() {
   const [formLoading, setFormLoading] = useState(false);
 
   const handleDelete = async (id: string, nama: string) => {
-    if (!confirm(`Hapus karyawan ${nama}? Data absensi terkait juga akan dihapus.`)) return;
+    if (!confirm(`Hapus karyawan ${nama}? Data absensi & izin terkait juga akan dihapus.`)) return;
     try {
+      // Hapus izin terkait
+      await supabase.from('leave_requests').delete().eq('employee_id', id);
+
+      // Hapus absensi terkait
+      await supabase.from('attendance').delete().eq('employee_id', id);
+
       // Hapus dari tabel employees
       const { error } = await supabase.from('employees').delete().eq('id', id);
       if (error) {
         alert('Gagal: ' + error.message);
         return;
       }
-      // Hapus data absensi terkait
-      await supabase.from('attendance').delete().eq('employee_id', id);
-      await supabase.from('leave_requests').delete().eq('employee_id', id);
+
       fetchEmployees();
-    } catch (err) {
-      alert('Gagal menghapus karyawan');
+    } catch (err: any) {
+      alert('Gagal menghapus karyawan: ' + (err.message || 'Unknown error'));
     }
   };
 
