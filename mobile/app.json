@@ -6,6 +6,11 @@
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0f172a"
+    },
     "ios": {
       "supportsTablet": true,
       "infoPlist": {
@@ -25,7 +30,11 @@
       "permissions": [
         "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
-        "CAMERA"
+        "CAMERA",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
       ]
     },
     "web": {
@@ -34,7 +43,13 @@
     },
     "plugins": [
       "expo-location",
-      "expo-camera"
-    ]
+      "expo-camera",
+      "expo-splash-screen"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "67916bd0-16c9-49c7-82a2-525d795c66c3"
+      }
+    }
   }
 }
