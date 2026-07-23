@@ -105,9 +105,9 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
         {/* Ripple rings */}
         {step >= 1 && (
           <>
-            <View style={[styles.ripple, { animationDelay: '0s' }]} />
-            <View style={[styles.ripple, { animationDelay: '0.6s' }]} />
-            <View style={[styles.ripple, { animationDelay: '1.2s' }]} />
+            <View style={[styles.ripple]} />
+            <View style={[styles.ripple2]} />
+            <View style={[styles.ripple3]} />
           </>
         )}
       </Animated.View>
@@ -146,7 +146,8 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFill,
+    position: 'absolute',
+    left: 0, right: 0, top: 0, bottom: 0,
     backgroundColor: '#0f172a',
     justifyContent: 'center',
     alignItems: 'center',
@@ -186,6 +187,24 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 2,
     borderColor: 'rgba(20, 184, 166, 0.3)',
+  },
+  ripple2: {
+    position: 'absolute',
+    width: 88,
+    height: 88,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: 'rgba(20, 184, 166, 0.2)',
+    transform: [{ scale: 1.15 }],
+  },
+  ripple3: {
+    position: 'absolute',
+    width: 88,
+    height: 88,
+    borderRadius: 28,
+    borderWidth: 2,
+    borderColor: 'rgba(20, 184, 166, 0.1)',
+    transform: [{ scale: 1.3 }],
   },
   brandText: {
     color: 'white',
@@ -229,7 +248,6 @@ const styles = StyleSheet.create({
   },
   dotsRow: {
     flexDirection: 'row',
-    gap: 6,
     marginTop: 12,
   },
   dot: {
@@ -237,6 +255,7 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
     backgroundColor: '#14b8a6',
+    marginHorizontal: 3,
   },
   footer: {
     position: 'absolute',
