@@ -67,8 +67,8 @@ export default function SplashScreen({ onDone }: SplashScreenProps) {
           height: 2,
           borderRadius: 1,
           backgroundColor: 'rgba(20, 184, 166, 0.08)',
-          left: `${(i % 8) * 14}%` as any,
-          top: `${Math.floor(i / 8) * 14}%` as any,
+          left: 20 + (i % 8) * 46,
+          top: 40 + Math.floor(i / 8) * 46,
         }}
       />
     );

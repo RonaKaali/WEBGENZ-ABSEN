@@ -43,8 +43,7 @@
     },
     "plugins": [
       "expo-location",
-      "expo-camera",
-      "expo-splash-screen"
+      "expo-camera"
     ],
     "extra": {
       "eas": {
