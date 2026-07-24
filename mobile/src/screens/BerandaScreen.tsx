@@ -204,7 +204,7 @@ export default function BerandaScreen() {
             </View>
           </View>
 
-          <TouchableOpacity onPress={handleMainButton} disabled={isDone} activeOpacity={0.8}
+          <TouchableOpacity onPress={handleMainButton} disabled={Boolean(isDone)} activeOpacity={0.8}
             style={{ backgroundColor: isDone ? '#94a3b8' : '#0d9488', paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}>
             <Text style={{ color: 'white', fontSize: 16, fontWeight: '700' }}>
               {isBeforeWork ? 'Absen Masuk Sekarang' : isWorking ? 'Absen Keluar' : 'Absensi Selesai ✓'}

@@ -141,7 +141,7 @@ export default function LoginScreen() {
 
           <TouchableOpacity
             onPress={handleLogin}
-            disabled={logging}
+            disabled={Boolean(logging)}
             activeOpacity={0.8}
             style={{
               backgroundColor: '#14b8a6',

@@ -162,7 +162,7 @@ export default function IzinScreen() {
 
         <TouchableOpacity
           onPress={handleSubmit}
-          disabled={!jenis || !tglMulai || !tglSelesai || sending}
+          disabled={Boolean(!jenis || !tglMulai || !tglSelesai || sending)}
           style={{
             backgroundColor: (!jenis || !tglMulai || !tglSelesai) ? '#94a3b8' : '#0d9488',
             paddingVertical: 16,
