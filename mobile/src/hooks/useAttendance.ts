@@ -138,14 +138,16 @@ export function useAttendance(userId: string | undefined) {
     onProgress?: (msg: string) => void
   ): Promise<{ error?: string }> => {
     try {
-      if (!userId) return { error: 'User not found' };
+      // Ambil user langsung dari auth — bukan dari closure
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) return { error: 'Sesi tidak valid, login ulang.' };
 
       const now = new Date().toISOString();
       const todayStr = new Date().toISOString().split('T')[0];
 
       // 1. Upload foto
       onProgress?.('Mengunggah foto...');
-      const fotoPath = await uploadPhoto(userId, photoUri, 'masuk');
+      const fotoPath = await uploadPhoto(authUser.id, photoUri, 'masuk');
 
       // 2. Get settings for status
       const { data: settings } = await supabase
@@ -164,7 +166,7 @@ export function useAttendance(userId: string | undefined) {
       // 3. Insert attendance
       onProgress?.('Menyimpan absen...');
       const { error } = await supabase.from('attendance').insert({
-        employee_id: userId,
+        employee_id: authUser.id,
         tanggal: todayStr,
         jam_masuk: now,
         status,
@@ -214,7 +216,9 @@ export function useAttendance(userId: string | undefined) {
     onProgress?: (msg: string) => void
   ): Promise<{ error?: string }> => {
     try {
-      if (!userId) return { error: 'User not found' };
+      // Ambil user langsung dari auth
+      const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+      if (authError || !authUser) return { error: 'Sesi tidak valid, login ulang.' };
       if (!today?.jam_masuk) return { error: 'Belum absen masuk' };
 
       const now = new Date().toISOString();
@@ -222,7 +226,7 @@ export function useAttendance(userId: string | undefined) {
 
       // 1. Upload foto
       onProgress?.('Mengunggah foto...');
-      const fotoPath = await uploadPhoto(userId, photoUri, 'keluar');
+      const fotoPath = await uploadPhoto(authUser.id, photoUri, 'keluar');
 
       // 2. Hitung durasi
       const masuk = new Date(today.jam_masuk).getTime();
@@ -240,7 +244,7 @@ export function useAttendance(userId: string | undefined) {
           lokasi_keluar_lng: lng,
           foto_keluar_url: fotoPath,
         })
-        .eq('employee_id', userId)
+        .eq('employee_id', authUser.id)
         .eq('tanggal', todayStr);
 
       if (error) throw new Error(error.message);
