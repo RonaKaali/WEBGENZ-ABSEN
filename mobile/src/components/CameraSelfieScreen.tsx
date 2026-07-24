@@ -64,24 +64,26 @@ export default function CameraSelfieScreen({ onCapture, onClose }: CameraSelfieS
   // Kamera view
   return (
     <View style={styles.container}>
-      <CameraView ref={cameraRef} style={styles.camera} facing="front">
-        <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
-          <Text style={styles.closeText}>✕</Text>
-        </TouchableOpacity>
+      <CameraView ref={cameraRef} style={styles.camera} facing="front" />
 
-        <View style={styles.captureArea}>
-          <TouchableOpacity onPress={takePicture} style={styles.captureBtn} activeOpacity={0.7}>
-            <View style={styles.captureInner} />
-          </TouchableOpacity>
-        </View>
-      </CameraView>
+      {/* Overlay controls — di luar CameraView karena tidak support children */}
+      <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.7}>
+        <Text style={styles.closeText}>✕</Text>
+      </TouchableOpacity>
+
+      <View style={styles.captureArea}>
+        <TouchableOpacity onPress={takePicture} style={styles.captureBtn} activeOpacity={0.7}>
+          <View style={styles.captureInner} />
+        </TouchableOpacity>
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    left: 0, right: 0, top: 0, bottom: 0,
     backgroundColor: 'black',
     zIndex: 999,
   },

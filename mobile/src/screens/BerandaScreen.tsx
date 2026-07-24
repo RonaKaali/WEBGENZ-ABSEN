@@ -55,20 +55,34 @@ export default function BerandaScreen() {
 
   // Step 1: Minta izin lokasi & ambil koordinat
   const requestLocation = async (action: 'masuk' | 'keluar') => {
+    console.log('[ABSEN][LOKASI] Memulai requestLocation, action:', action);
     try {
       setLoadingMessage('Mengambil lokasi...');
       setIsLoading(true);
 
-      const { status } = await Location.requestForegroundPermissionsAsync();
+      const { status, canAskAgain } = await Location.requestForegroundPermissionsAsync();
+      console.log('[ABSEN][LOKASI] Status izin:', status, 'canAskAgain:', canAskAgain);
+
       if (status !== 'granted') {
         setIsLoading(false);
-        Alert.alert('Lokasi Diperlukan', 'Lokasi wajib diaktifkan untuk absen');
+        if (!canAskAgain) {
+          // User pernah pilih "Don't ask again"
+          Alert.alert(
+            'Izin Lokasi Dibutuhkan',
+            'Aplikasi butuh akses lokasi untuk absen. Aktifkan lewat Pengaturan HP > Aplikasi > WebGenZ Absen > Izin > Lokasi.',
+            [{ text: 'OK' }]
+          );
+        } else {
+          Alert.alert('Lokasi Diperlukan', 'Lokasi wajib diaktifkan untuk absen');
+        }
         return;
       }
 
+      setLoadingMessage('Mendapatkan koordinat GPS...');
       const loc = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.High,
       });
+      console.log('[ABSEN][LOKASI] Koordinat:', loc.coords.latitude, loc.coords.longitude);
 
       setCapturedLocation({
         lat: loc.coords.latitude,
@@ -77,18 +91,24 @@ export default function BerandaScreen() {
       setIsLoading(false);
 
       // Lanjut ke kamera
+      console.log('[ABSEN][LOKASI] Lokasi berhasil, beralih ke kamera...');
       setPendingAction(action);
       setShowCamera(true);
-    } catch (err) {
+    } catch (err: any) {
+      console.error('[ABSEN][LOKASI] Error:', err.message || err);
       setIsLoading(false);
-      Alert.alert('Gagal Mendapatkan Lokasi', 'Lokasi wajib diaktifkan untuk absen. Periksa pengaturan GPS Anda.');
+      Alert.alert('Gagal Mendapatkan Lokasi', err.message || 'Lokasi wajib diaktifkan untuk absen. Periksa pengaturan GPS Anda.');
     }
   };
 
   // Step 2-4: Foto diambil → upload + simpan
   const handlePhotoCapture = async (photoUri: string) => {
+    console.log('[ABSEN][FOTO] Foto diterima, pendingAction:', pendingAction);
     setShowCamera(false);
-    if (!pendingAction || !capturedLocation) return;
+    if (!pendingAction || !capturedLocation) {
+      console.warn('[ABSEN][FOTO] pendingAction atau capturedLocation null, abort');
+      return;
+    }
 
     setIsLoading(true);
 
@@ -99,12 +119,15 @@ export default function BerandaScreen() {
       result = await checkOutWithLocation(photoUri, capturedLocation.lat, capturedLocation.lng, setLoadingMessage);
     }
 
+    console.log('[ABSEN][HASIL] Result:', result);
     setIsLoading(false);
     setPendingAction(null);
     setCapturedLocation(null);
 
     if (result?.error) {
       Alert.alert('Gagal', result.error);
+    } else {
+      Alert.alert('Berhasil', 'Absen berhasil dicatat!');
     }
   };
 
@@ -115,6 +138,11 @@ export default function BerandaScreen() {
   };
 
   const handleMainButton = () => {
+    console.log('[ABSEN] Tombol ditekan, isBeforeWork:', isBeforeWork, 'isWorking:', isWorking, 'isDone:', isDone);
+    if (isDone) {
+      console.log('[ABSEN] Tombol disabled (already done), tidak melakukan apa-apa');
+      return;
+    }
     if (isBeforeWork) {
       requestLocation('masuk');
     } else if (isWorking) {
